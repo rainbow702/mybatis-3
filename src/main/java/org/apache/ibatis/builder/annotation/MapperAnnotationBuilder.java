@@ -196,6 +196,10 @@ public class MapperAnnotationBuilder {
   }
 
   private String generateResultMapName(Method method) {
+    Results results = method.getAnnotation(Results.class);
+    if (results != null && !results.id().isEmpty()) {
+      return type.getName() + "." + results.id();
+    }
     StringBuilder suffix = new StringBuilder();
     for (Class<?> c : method.getParameterTypes()) {
       suffix.append("-");
@@ -236,7 +240,9 @@ public class MapperAnnotationBuilder {
       String column = discriminator.column();
       Class<?> javaType = discriminator.javaType() == void.class ? String.class : discriminator.javaType();
       JdbcType jdbcType = discriminator.jdbcType() == JdbcType.UNDEFINED ? null : discriminator.jdbcType();
-      Class<? extends TypeHandler<?>> typeHandler = discriminator.typeHandler() == UnknownTypeHandler.class ? null : discriminator.typeHandler();
+      @SuppressWarnings("unchecked")
+      Class<? extends TypeHandler<?>> typeHandler = (Class<? extends TypeHandler<?>>)
+              (discriminator.typeHandler() == UnknownTypeHandler.class ? null : discriminator.typeHandler());
       Case[] cases = discriminator.cases();
       Map<String, String> discriminatorMap = new HashMap<String, String>();
       for (Case c : cases) {
@@ -487,6 +493,9 @@ public class MapperAnnotationBuilder {
       if (result.id()) {
         flags.add(ResultFlag.ID);
       }
+      @SuppressWarnings("unchecked")
+      Class<? extends TypeHandler<?>> typeHandler = (Class<? extends TypeHandler<?>>)
+              ((result.typeHandler() == UnknownTypeHandler.class) ? null : result.typeHandler());
       ResultMapping resultMapping = assistant.buildResultMapping(
           resultType,
           nullOrEmpty(result.property()),
@@ -497,7 +506,7 @@ public class MapperAnnotationBuilder {
           null,
           null,
           null,
-          result.typeHandler() == UnknownTypeHandler.class ? null : result.typeHandler(),
+          typeHandler,
           flags,
           null,
           null,
@@ -541,6 +550,9 @@ public class MapperAnnotationBuilder {
       if (arg.id()) {
         flags.add(ResultFlag.ID);
       }
+      @SuppressWarnings("unchecked")
+      Class<? extends TypeHandler<?>> typeHandler = (Class<? extends TypeHandler<?>>)
+              (arg.typeHandler() == UnknownTypeHandler.class ? null : arg.typeHandler());
       ResultMapping resultMapping = assistant.buildResultMapping(
           resultType,
           null,
@@ -551,7 +563,7 @@ public class MapperAnnotationBuilder {
           nullOrEmpty(arg.resultMap()),
           null,
           null,
-          arg.typeHandler() == UnknownTypeHandler.class ? null : arg.typeHandler(),
+          typeHandler,
           flags,
           null,
           null,
